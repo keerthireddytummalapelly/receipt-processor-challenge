@@ -20,7 +20,8 @@ def generate_receipt_id(receipt: Receipt) -> str:
 
     """
     # Convert item list to a hashed string
-    item_hashes = [hashlib.sha1(f"{item.shortDescription}:{item.price}".encode()).hexdigest() for item in receipt.items]
+    sorted_items = sorted(receipt.items, key=lambda item: item.shortDescription)
+    item_hashes = [hashlib.sha1(f"{item.shortDescription}:{item.price}".encode()).hexdigest() for item in sorted_items]
     items_hash = hashlib.sha1("".join(item_hashes).encode()).hexdigest()
 
     # Create a unique string combining all receipt details

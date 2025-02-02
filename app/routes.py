@@ -27,20 +27,21 @@ async def process_receipt(receipt: Receipt):
         raise HTTPException(status_code=400, detail="The receipt is invalid.") 
     
     # Parse purchase date on the receipt
-    purchaseDate = parse_date(receipt.purchaseDate)
+    receipt.purchaseDate = parse_date(receipt.purchaseDate)
 
     # Parse purchase time on the receipt
-    purchaseTime = parse_time(receipt.purchaseTime)
+    receipt.purchaseTime = parse_time(receipt.purchaseTime)
     
-    if purchaseDate is None or purchaseTime is None:
+    if receipt.purchaseDate is None or receipt.purchaseTime is None:
         raise HTTPException(status_code=400, detail="The receipt is invalid.") 
+    
     
     # Generate the receipt id
     receipt_id = generate_receipt_id(receipt)
 
     # Avoids recomputaion if id is already present in the dictionary
-    # if receipt_id in receipt_map:
-    #     return {"id": receipt_id}
+    if receipt_id in receipt_map:
+        return {"id": receipt_id}
 
     # Initialize points
     points = 0
@@ -60,8 +61,7 @@ async def process_receipt(receipt: Receipt):
     points += (len(receipt.items) // 2) * 5
 
     # 6 points if the day in the purchase date is odd.
-    print(purchaseDate.day)
-    if purchaseDate.day % 2 != 0:
+    if receipt.purchaseDate.day % 2 != 0:
         points += 6
 
     # If the trimmed length of the item description is a multiple of 3, multiply the price by 0.2 and round up. The result is the number of points earned.
@@ -73,7 +73,7 @@ async def process_receipt(receipt: Receipt):
     # 10 points if the time of purchase is after 2:00pm and before 4:00pm.
     lower_bound = datetime.strptime("14:00:00.000", "%H:%M:%S.%f").time()
     upper_bound = datetime.strptime("16:00:00.000", "%H:%M:%S.%f").time()
-    if lower_bound < purchaseTime < upper_bound:
+    if lower_bound < receipt.purchaseTime < upper_bound:
         points += 10
     
     # Store points calculated in dict to avoid recomputing
